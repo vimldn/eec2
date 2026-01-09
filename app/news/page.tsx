@@ -10,7 +10,6 @@ export const metadata: Metadata = {
   },
 }
 
-// Revalidate every hour
 export const revalidate = 3600
 
 interface FeedItem {
@@ -19,8 +18,6 @@ interface FeedItem {
   contentSnippet?: string
   content?: string
   pubDate?: string
-  enclosure?: { url: string }
-  'media:content'?: { $: { url: string } }
   source: string
   sourceUrl: string
   image?: string
@@ -36,24 +33,18 @@ const feeds = [
 ]
 
 function extractImage(item: any): string | undefined {
-  // Try various common RSS image fields
   if (item.enclosure?.url) return item.enclosure.url
   if (item['media:content']?.$?.url) return item['media:content'].$.url
   if (item['media:thumbnail']?.$?.url) return item['media:thumbnail'].$.url
-  
-  // Try to extract from content
   const content = item.content || item['content:encoded'] || ''
   const imgMatch = content.match(/<img[^>]+src="([^">]+)"/)
   if (imgMatch) return imgMatch[1]
-  
   return undefined
 }
 
 function truncateToSentences(text: string, count: number = 3): string {
   if (!text) return ''
-  // Clean HTML tags
   const clean = text.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
-  // Split by sentence endings
   const sentences = clean.match(/[^.!?]+[.!?]+/g) || [clean]
   return sentences.slice(0, count).join(' ').trim()
 }
@@ -61,11 +52,7 @@ function truncateToSentences(text: string, count: number = 3): string {
 function formatDate(dateString?: string): string {
   if (!dateString) return ''
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric',
-    year: 'numeric'
-  })
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 async function getNews(): Promise<FeedItem[]> {
@@ -102,7 +89,6 @@ async function getNews(): Promise<FeedItem[]> {
     })
   )
 
-  // Sort by date, newest first
   return allItems.sort((a, b) => {
     const dateA = a.pubDate ? new Date(a.pubDate).getTime() : 0
     const dateB = b.pubDate ? new Date(b.pubDate).getTime() : 0
@@ -116,7 +102,6 @@ export default async function NewsPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 py-12">
-        {/* SEO Intro Section */}
         <header className="mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             NYC Real Estate News
@@ -132,14 +117,12 @@ export default async function NewsPage() {
           </p>
         </header>
 
-        {/* News Grid */}
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           {news.map((item, index) => (
             <article 
               key={`${item.link}-${index}`}
               className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
             >
-              {/* Image */}
               {item.image && (
                 <div className="relative h-48 w-full bg-gray-100">
                   <img
@@ -151,25 +134,20 @@ export default async function NewsPage() {
                 </div>
               )}
               
-              {/* Content */}
               <div className="p-5">
-                {/* Source & Date */}
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
                   <span className="font-medium text-blue-600">{item.source}</span>
                   <span>{formatDate(item.pubDate)}</span>
                 </div>
                 
-                {/* Title */}
                 <h2 className="text-lg font-semibold text-gray-900 mb-3 line-clamp-2">
                   {item.title}
                 </h2>
                 
-                {/* Snippet */}
                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">
                   {truncateToSentences(item.contentSnippet || item.content || '', 3)}
                 </p>
                 
-                {/* Read More Button */}
                 
                   href={item.link}
                   target="_blank"
@@ -177,18 +155,8 @@ export default async function NewsPage() {
                   className="inline-flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
                 >
                   Read more at {item.sourceUrl}
-                  <svg 
-                    className="w-4 h-4" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                  >
-                    <path 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      strokeWidth={2} 
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" 
-                    />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </a>
               </div>
@@ -196,14 +164,12 @@ export default async function NewsPage() {
           ))}
         </div>
 
-        {/* Empty State */}
         {news.length === 0 && (
           <div className="text-center py-12">
             <p className="text-gray-500">Unable to load news at this time. Please check back later.</p>
           </div>
         )}
 
-        {/* Footer Note */}
         <footer className="mt-12 pt-8 border-t border-gray-200">
           <p className="text-sm text-gray-500 text-center">
             News aggregated from The Real Deal, Curbed NY, New York YIMBY, 
